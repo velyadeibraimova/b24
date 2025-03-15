@@ -1,0 +1,46 @@
+# files ext
+*.sql
+*.tgz
+*.tar.gz
+*.tar
+*.rar
+*.zip
+*.mp3
+*.mp4
+*.webm
+*.mov
+*.MOV
+*.wav
+*.flv
+*.db
+*.psd
+*.pdf
+*.doc
+*.docx
+*.txt
+*.text
+*.log
+*.config
+*.xml
+*.tbk
+*.html
+
+# dirs & files
+/.idea/
+/.csscomb.json
+/.htaccess
+/sitemap*.xml
+/robots.txt
+/*.restore
+
+# core
+bitrix/*
+!bitrix/license_key.php
+!bitrix/templates/
+!bitrix/components/
+bitrix/components/bitrix/
+!bitrix/php_interface/
+bitrix/php_interface/dbconn.php
+upload/
+bitrix/templates/landing24/
+bitrix/templates/learning/
