@@ -103,7 +103,6 @@ try {
 (Exception $e) {
     $errors[] = $e->getMessage();
 }
-echo Loc::getMessage('ADD');
 ?>
 
     <section class="doctors">
@@ -160,7 +159,7 @@ echo Loc::getMessage('ADD');
             <form class="doctor-add-form" method="POST">
                 <h2><?= $action === 'edit' ? Loc::getMessage('MESS4') : Loc::getMessage('MESS8') ?></h2>
 
-                <input type="text" name="NAME"
+                <input type="text" name="ELEMENT.NAME"
                        value="<?= htmlspecialchars($doctor['NAME'] ?? '') ?>"
                        placeholder="<?= Loc::getMessage('MESS9'); ?>" required>
 
