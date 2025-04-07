@@ -14,6 +14,7 @@ import Utils from './utils';
 import ItemUserFavorites from "./items/item-user-favorites";
 import {MessageBox, MessageBoxButtons} from 'ui.dialogs.messagebox';
 import { BannerDispatcher } from 'ui.banner-dispatcher';
+import { Analytics, AnalyticActions } from './analytics';
 
 export default class Menu
 {
@@ -55,6 +56,7 @@ export default class Menu
 		params = typeof params === "object" ? params : {};
 
 		Options.isExtranet = params.isExtranet === 'Y';
+		Options.isMainPageEnabled = params.isMainPageEnabled === 'Y';
 		Options.isAdmin = params.isAdmin;
 		Options.isCustomPresetRestricted = params.isCustomPresetAvailable !== 'Y';
 		Options.availablePresetTools = params.availablePresetTools;
@@ -62,6 +64,7 @@ export default class Menu
 
 		this.isCollapsedMode = params.isCollapsedMode;
 		this.workgroupsCounterData = params.workgroupsCounterData;
+		this.analytics = new Analytics(params.isAdmin);
 
 		this.initAndBindNodes();
 		this.bindEvents();
@@ -125,7 +128,7 @@ export default class Menu
 		{
 			settingsSaveBtn.addEventListener('click', this.handleViewMode.bind(this));
 		}
-		this.menuContainer.querySelector(".menu-settings-btn").addEventListener('click', () => {
+		this.menuContainer.querySelector(".menu-settings-btn")?.addEventListener('click', () => {
 			this.getSettingsController().show();
 		})
 	}
@@ -183,11 +186,18 @@ export default class Menu
 		});
 	}
 
-	getSettingsController(): SettingsController
+	getSettingsController(): ?SettingsController
 	{
 		return this.cache.remember('presetController', () => {
+			const node = this.menuContainer.querySelector(".menu-settings-btn");
+
+			if (!node)
+			{
+				return null;
+			}
+
 			return new SettingsController(
-				this.menuContainer.querySelector(".menu-settings-btn"),
+				node,
 				{
 					events: {
 						onGettingSettingMenuItems: this.onGettingSettingMenuItems.bind(this),
@@ -206,8 +216,14 @@ export default class Menu
 				this.menuContainer,
 				{
 					events: {
-						onPresetIsSet: ({data}) => {
-							const {saveSortItems, firstItemLink, customItems} = this.getItemsController().export();
+						onPresetIsSet: ({ data }) => {
+							const { saveSortItems, firstItemLink, customItems } = this.getItemsController().export();
+
+							if (!data)
+							{
+								this.analytics.sendSetCustomPreset();
+							}
+
 							return Backend.setCustomPreset(data, saveSortItems, customItems, firstItemLink)
 						},
 						onShow: () => { this.isMenuMouseLeaveBlocked.push('presets'); },
@@ -220,26 +236,60 @@ export default class Menu
 
 	getDefaultPresetController(): PresetDefaultController
 	{
+		let closeEventWasProcessed = false;
+		const postponeHandler = (mode: String): Promise => {
+			const result = Backend.postponeSystemPreset(mode);
+			EventEmitter.emit(this, Options.eventName('onPresetIsPostponed'));
+
+			return result;
+		};
+
 		return this.cache.remember('defaultPresetController', () => {
-			return new PresetDefaultController(
+			const presetController = new PresetDefaultController(
 				this.menuContainer,
 				{
 					events: {
-						onPresetIsSet: ({data: {mode, presetId}}) => {
+						onPresetIsSet: ({ data: { mode, presetId } }) => {
+							this.analytics.sendSetPreset(
+								presetId,
+								mode === 'personal',
+								AnalyticActions.CONFIRM,
+							);
+							closeEventWasProcessed = true;
+
 							return Backend.setSystemPreset(mode, presetId);
 						},
-						onPresetIsPostponed: ({data: {mode}}) => {
-							const result =  Backend.postponeSystemPreset(mode);
-							EventEmitter.emit(this, Options.eventName('onPresetIsPostponed'));
-							return result;
-						}
-/*
-						onShow: () => { this.isMenuMouseLeaveBlocked.push('presets-default'); },
-						onClose: () => { this.isMenuMouseLeaveBlocked.pop(); },
-*/
-					}
-				}
+						onPresetIsPostponed: ({ data: { mode } }) => {
+							this.analytics.sendSetPreset(
+								presetController.getSelectedPreset(),
+								mode === 'personal',
+								AnalyticActions.LATER,
+							);
+							closeEventWasProcessed = true;
+
+							return postponeHandler(mode);
+						},
+						onShow: () => {
+							this.analytics.sendClose();
+						},
+						onClose: () => {
+							if (closeEventWasProcessed !== true)
+							{
+								this.analytics.sendSetPreset(
+									presetController.getSelectedPreset(),
+									presetController.getMode() === 'personal',
+									AnalyticActions.CLOSE,
+								);
+
+								postponeHandler(presetController.getMode());
+							}
+							closeEventWasProcessed = false;
+						},
+					},
+				},
 			);
+
+			return presetController;
 		});
 	}
 	//endregion
@@ -994,11 +1044,17 @@ export default class Menu
 						menuEmployeesText.style.opacity = state.opacity / 100;
 					}
 
-					settingsIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
-					settingsIconBox.style.opacity = state.opacityRevert / 100;
+					if (settingsIconBox)
+					{
+						settingsIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
+						settingsIconBox.style.opacity = state.opacityRevert / 100;
+					}
 
-					settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
-					settingsBtnText.style.opacity = state.opacity / 100;
+					if (settingsBtnText)
+					{
+						settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
+						settingsBtnText.style.opacity = state.opacity / 100;
+					}
 
 					helpIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
 					helpIconBox.style.opacity = state.opacityRevert / 100;
@@ -1082,11 +1138,17 @@ export default class Menu
 						menuEmployeesText.style.opacity = state.opacity / 100;
 					}
 
-					settingsIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
-					settingsIconBox.style.opacity = state.opacityRevert / 100;
+					if (settingsIconBox)
+					{
+						settingsIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
+						settingsIconBox.style.opacity = state.opacityRevert / 100;
+					}
 
-					settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
-					settingsBtnText.style.opacity = state.opacity / 100;
+					if (settingsBtnText)
+					{
+						settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
+						settingsBtnText.style.opacity = state.opacity / 100;
+					}
 
 					helpIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
 					helpIconBox.style.opacity = state.opacityRevert / 100;

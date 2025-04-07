@@ -3,6 +3,7 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
 $APPLICATION->SetTitle("Доктора");
 $APPLICATION->SetAdditionalCSS('/doctors/style.css');
 
+use Bitrix\Main\Localization\Loc;
 use Models\Lists\DoctorsProp4PropertyValuesTable as ProcsTable;
 use Models\Lists\DoctorsTable;
 
@@ -102,92 +103,93 @@ try {
 (Exception $e) {
     $errors[] = $e->getMessage();
 }
+echo Loc::getMessage('ADD');
 ?>
 
-<section class="doctors">
-    <h1>Наши врачи</h1>
+    <section class="doctors">
+        <h1><?= Loc::getMessage('MESS1'); ?></h1>
 
-    <!-- Блок ошибок -->
-    <? if (!empty($errors)): ?>
-        <div class="errors">
-            <? foreach ($errors as $error): ?>
-                <p><?= htmlspecialchars($error) ?></p>
-            <? endforeach ?>
-        </div>
-    <? endif ?>
-
-    <? if (empty($action)): ?>
-        <div class="add-buttons">
-            <a href="/doctors/new" class="button">Добавить врача</a>
-            <a href="/doctors/newproc" class="button">Добавить процедуру</a>
-        </div>
-
-        <div class="cards-list">
-            <? foreach ($doctors as $doc):
-                $name = '';
-                $name = $doc['PROP1'] . " " . $doc['PROP2'] . ' ' . $doc['PROP3']; ?>
-                <div class="card">
-                    <h2><?= htmlspecialchars($name) ?></h2>
-                    <a href="/doctors/<?= $doc['NAME'] ?>" class="card-link"></a>
-                </div>
-            <? endforeach ?>
-        </div>
-
-    <? elseif ($action === 'newproc'): ?>
-        <form class="doctor-add-form" method="POST">
-            <h2>Добавление процедуры</h2>
-            <input type="text" name="NAME" placeholder="Название процедуры" required>
-            <input type="submit" name="submit" value="Сохранить">
-            <a href="/doctors" class="cancel">Отмена</a>
-        </form>
-    <? elseif ($action === 'doctor'): ?>
-        <div class="add-buttons">
-            <a href="/doctors/edit/<?= $doctor['NAME'] ?>" class="button">Редактировать врача</a>
-        </div>
-        <div class="doctor-card">
-            <div class="doctor-name">
-                <?= $doctor['PROP1'] . " " . $doctor['PROP2'] . ' ' . $doctor['PROP3']; ?>
-            </div>
-            <ul class="doctor-procedures">
-                <? foreach ($procs as $proc) { ?>
-                    <li><?= $proc['NAME']; ?></li>
-                <? } ?>
-            </ul>
-        </div>
-    <? elseif ($action === 'edit' || $action === 'new'): ?>
-        <form class="doctor-add-form" method="POST">
-            <h2><?= $action === 'edit' ? 'Редактирование' : 'Новый врач' ?></h2>
-
-            <input type="text" name="NAME"
-                   value="<?= htmlspecialchars($doctor['NAME'] ?? '') ?>"
-                   placeholder="Название страницы врача (фамилия латиницей)" required>
-
-            <input type="text" name="PROP1"
-                   value="<?= htmlspecialchars($doctor['PROP1'] ?? '') ?>"
-                   placeholder="Фамилия врача" required>
-
-            <input type="text" name="PROP2"
-                   value="<?= htmlspecialchars($doctor['PROP2'] ?? '') ?>"
-                   placeholder="Имя врача" required>
-
-            <input type="text" name="PROP3"
-                   value="<?= htmlspecialchars($doctor['PROP3'] ?? '') ?>"
-                   placeholder="Отчество врача">
-            <select name="PROP4[]" multiple>
-                <? foreach ($procedures as $proc): ?>
-                    <option value="<?= $proc['IBLOCK_ELEMENT_ID'] ?>"
-                        <?= in_array($proc['IBLOCK_ELEMENT_ID'], (array)($doctor['PROP4'] ?? [])) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($proc['NAME']) ?>
-                    </option>
+        <!-- Блок ошибок -->
+        <? if (!empty($errors)): ?>
+            <div class="errors">
+                <? foreach ($errors as $error): ?>
+                    <p><?= htmlspecialchars($error) ?></p>
                 <? endforeach ?>
-            </select>
-            <input hidden type="text" name="IBLOCK_ELEMENT_ID"
-                   value="<?= htmlspecialchars($doctor['IBLOCK_ELEMENT_ID'] ?? '') ?>">
-            <input type="submit" name="submit"
-                   value="<?= $action === 'edit' ? 'Сохранить' : 'Добавить' ?>">
-            <a href="/doctors" class="cancel">Отмена</a>
-        </form>
-    <? endif ?>
-</section>
+            </div>
+        <? endif ?>
 
-<? require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/footer.php"); ?>  можешь улучшить?
+        <? if (empty($action)): ?>
+            <div class="add-buttons">
+                <a href="/doctors/new" class="button"><?= Loc::getMessage('MESS2'); ?></a>
+                <a href="/doctors/newproc" class="button"><?= Loc::getMessage('MESS3'); ?></a>
+            </div>
+
+            <div class="cards-list">
+                <? foreach ($doctors as $doc):
+                    $name = '';
+                    $name = $doc['PROP1'] . " " . $doc['PROP2'] . ' ' . $doc['PROP3']; ?>
+                    <div class="card">
+                        <h2><?= htmlspecialchars($name) ?></h2>
+                        <a href="/doctors/<?= $doc['NAME'] ?>" class="card-link"></a>
+                    </div>
+                <? endforeach ?>
+            </div>
+
+        <? elseif ($action === 'newproc'): ?>
+            <form class="doctor-add-form" method="POST">
+                <h2><?= Loc::getMessage('MESS3'); ?></h2>
+                <input type="text" name="NAME" placeholder="<?= Loc::getMessage('MESS5'); ?>" required>
+                <input type="submit" name="submit" value="<?= Loc::getMessage('MESS6'); ?>">
+                <a href="/doctors" class="cancel"><?= Loc::getMessage('MESS7'); ?></a>
+            </form>
+        <? elseif ($action === 'doctor'): ?>
+            <div class="add-buttons">
+                <a href="/doctors/edit/<?= $doctor['NAME'] ?>" class="button"><?= Loc::getMessage('MESS4'); ?></a>
+            </div>
+            <div class="doctor-card">
+                <div class="doctor-name">
+                    <?= $doctor['PROP1'] . " " . $doctor['PROP2'] . ' ' . $doctor['PROP3']; ?>
+                </div>
+                <ul class="doctor-procedures">
+                    <? foreach ($procs as $proc) { ?>
+                        <li><?= $proc['NAME']; ?></li>
+                    <? } ?>
+                </ul>
+            </div>
+        <? elseif ($action === 'edit' || $action === 'new'): ?>
+            <form class="doctor-add-form" method="POST">
+                <h2><?= $action === 'edit' ? Loc::getMessage('MESS4') : Loc::getMessage('MESS8') ?></h2>
+
+                <input type="text" name="NAME"
+                       value="<?= htmlspecialchars($doctor['NAME'] ?? '') ?>"
+                       placeholder="<?= Loc::getMessage('MESS9'); ?>" required>
+
+                <input type="text" name="PROP1"
+                       value="<?= htmlspecialchars($doctor['PROP1'] ?? '') ?>"
+                       placeholder="<?= Loc::getMessage('MESS10'); ?>" required>
+
+                <input type="text" name="PROP2"
+                       value="<?= htmlspecialchars($doctor['PROP2'] ?? '') ?>"
+                       placeholder="<?= Loc::getMessage('MESS11'); ?>" required>
+
+                <input type="text" name="PROP3"
+                       value="<?= htmlspecialchars($doctor['PROP3'] ?? '') ?>"
+                       placeholder="<?= Loc::getMessage('MESS12'); ?>">
+                <select name="PROP4[]" multiple>
+                    <? foreach ($procedures as $proc): ?>
+                        <option value="<?= $proc['IBLOCK_ELEMENT_ID'] ?>"
+                            <?= in_array($proc['IBLOCK_ELEMENT_ID'], (array)($doctor['PROP4'] ?? [])) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($proc['NAME']) ?>
+                        </option>
+                    <? endforeach ?>
+                </select>
+                <input hidden type="text" name="IBLOCK_ELEMENT_ID"
+                       value="<?= htmlspecialchars($doctor['IBLOCK_ELEMENT_ID'] ?? '') ?>">
+                <input type="submit" name="submit"
+                       value="<?= $action === 'edit' ? Loc::getMessage('MESS6') : Loc::getMessage('MESS13') ?>">
+                <a href="/doctors" class="cancel"><?= Loc::getMessage('MESS7'); ?></a>
+            </form>
+        <? endif ?>
+    </section>
+
+<? require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/footer.php"); ?>

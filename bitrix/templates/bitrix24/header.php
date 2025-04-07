@@ -65,13 +65,6 @@ $isIndexPage =
 
 $isBitrix24Cloud = ModuleManager::isModuleInstalled('bitrix24');
 
-if ($isBitrix24Cloud)
-{
-	\Bitrix\Main\UI\Extension::load([
-		'bitrix24.sales-page'
-	]);
-}
-
 if ($isIndexPage)
 {
 	if (!defined('BITRIX24_INDEX_PAGE'))
@@ -162,8 +155,9 @@ if ($isCompositeMode):
 endif;
 
 $isExtranet =
-	ModuleManager::isModuleInstalled('extranet') &&
+	Loader::includeModule('extranet') &&
 	COption::GetOptionString('extranet', 'extranet_site') === SITE_ID;
+$isCollaber = $isExtranet && \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById((int)$USER->getId());
 
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 $uri = new \Bitrix\Main\Web\Uri($request->getRequestUri());
@@ -193,11 +187,6 @@ if (CUserOptions::GetOption('intranet', 'left_menu_collapsed') === 'Y')
 
 if ($isBitrix24Cloud)
 {
-	if (Option::get('bitrix24', 'creator_confirmed', 'N') !== 'Y')
-	{
-		$APPLICATION->IncludeComponent('bitrix:bitrix24.creatorconfirmed', '', [], null, ['HIDE_ICONS' => 'Y']);
-	}
-
 	if (
 		Option::get("bitrix24", "domain_changed", 'N') === 'N' ||
 		is_array(\CUserOptions::GetOption('bitrix24', 'domain_changed', false))
@@ -278,16 +267,16 @@ if ($isBitrix24Cloud)
 						if (!IsModuleInstalled("bitrix24") /*IsModuleInstalled("search")*/ )
 						{
 							$searchParams = [
-								"NUM_CATEGORIES" => "4",
-								"CATEGORY_3_TITLE" => Loc::getMessage('BITRIX24_SEARCH_MICROBLOG'),
-								"CATEGORY_3" => [
+								"NUM_CATEGORIES" => "5",
+								"CATEGORY_4_TITLE" => Loc::getMessage('BITRIX24_SEARCH_MICROBLOG'),
+								"CATEGORY_4" => [
 									0 => "microblog", 1 => "blog",
 								],
 							];
 						}
 						else
 						{
-							$searchParams = ['NUM_CATEGORIES' => '3',];
+							$searchParams = ['NUM_CATEGORIES' => '4',];
 						}
 
 						$APPLICATION->IncludeComponent(
@@ -309,8 +298,12 @@ if ($isBitrix24Cloud)
 									"CATEGORY_1" => [
 										0 => "custom_sonetgroups",
 									],
-									"CATEGORY_2_TITLE" => Loc::getMessage('BITRIX24_SEARCH_MENUITEMS'),
-									"CATEGORY_2" => [
+									'CATEGORY_2_TITLE' => Loc::getMessage('BITRIX24_SEARCH_COLLAB'),
+									'CATEGORY_2' => [
+											0 => 'custom_collabs',
+									],
+									"CATEGORY_3_TITLE" => Loc::getMessage('BITRIX24_SEARCH_MENUITEMS'),
+									"CATEGORY_3" => [
 										0 => "custom_menuitems",
 									],
 									"CATEGORY_OTHERS_TITLE" => Loc::getMessage('BITRIX24_SEARCH_OTHER'),
@@ -346,9 +339,21 @@ if ($isBitrix24Cloud)
 						?><div class="header-item" id="header-buttons"><?
 							if (IsModuleInstalled('bitrix24'))
 							{
-								$APPLICATION->IncludeComponent("bitrix:bitrix24.license.widget", '');
+								$APPLICATION->IncludeComponent("bitrix:bitrix24.license.widget", "");
 							}
-							$APPLICATION->IncludeComponent("bitrix:intranet.invitation.widget", "", []);
+							else
+							{
+								$APPLICATION->IncludeComponent("bitrix:intranet.license.widget", "");
+							}
+
+							if ($isCollaber)
+							{
+								$APPLICATION->IncludeComponent("bitrix:intranet.create.portal.button", "", []);
+							}
+							else
+							{
+								$APPLICATION->IncludeComponent("bitrix:intranet.invitation.widget", "", []);
+							}
 						?></div>
 					</div>
 				</div>

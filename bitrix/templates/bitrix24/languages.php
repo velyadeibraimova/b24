@@ -68,6 +68,14 @@ $b24Languages = array(
 	"th" => array(
 		"NAME" => "ภาษาไทย",
 		"IS_BETA" => false
-	)
+	),
+	"ar" => [
+		"NAME" => "عربي",
+		"IS_BETA" => true
+	],
+	"kz" => [
+		"NAME" => "Қазақша",
+		"IS_BETA" => true
+	],
 );
 ?>

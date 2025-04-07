@@ -16,6 +16,8 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Socialnetwork\Collab\Url\UrlManager;
+use Bitrix\Socialnetwork\Helper\Feature;
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Main\UI;
@@ -37,6 +39,8 @@ if (Loader::includeModule('bitrix24'))
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
+
+$isProjectAccessEnabled = \Bitrix\Socialnetwork\Helper\Workgroup::isProjectAccessFeatureEnabled();
 
 $groupMember = in_array($arResult['CurrentUserPerms']['UserRole'], UserToGroupTable::getRolesMember());
 
@@ -118,7 +122,7 @@ if (
 			userIsAutoMember: <?=(isset($arResult["CurrentUserPerms"]["UserIsAutoMember"]) && $arResult["CurrentUserPerms"]["UserIsAutoMember"] ? 'true' : 'false')?>,
 			userIsScrumMaster: <?= (isset($arResult['CurrentUserPerms']['UserIsScrumMaster']) && $arResult['CurrentUserPerms']['UserIsScrumMaster'] ? 'true' : 'false') ?>,
 
-			editFeaturesAllowed: <?=(\Bitrix\Socialnetwork\Helper\Workgroup::getEditFeaturesAvailability() ? 'true' : 'false')?>,
+			editFeaturesAllowed: <?= CUtil::phpToJSObject($isProjectAccessEnabled) ?>,
 			copyFeatureAllowed: <?=(\Bitrix\Socialnetwork\Helper\Workgroup::isGroupCopyFeatureEnabled() ? 'true' : 'false')?>,
 			canPickTheme: <?= (
 				$arResult['inIframe']
@@ -338,6 +342,14 @@ if (
 							"IS_ACTIVE" => ($arParams['PAGE_ID'] === "group_{$key}"),
 							"IS_DISABLED" => $isDisabled,
 						];
+
+						if ($key === 'calendar')
+						{
+							/** @see \Bitrix\Calendar\Internals\Counter\CounterDictionary::COUNTER_GROUP_INVITES */
+							$item['COUNTER'] = $arResult['Calendar']['Counters']['calendar_group_invites'] ?? 0;
+							/** @see \Bitrix\Calendar\Internals\Counter\CounterDictionary::COUNTER_GROUP_INVITES_TPL */
+							$item['COUNTER_ID'] = sprintf('calendar_group_invites_%d', $arResult['Group']['ID']);
+						}
 
 						if (
 							!empty($arResult["OnClicks"])

@@ -17,7 +17,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Counter\Name;
-use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\KpiLimit;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\User;
 
 CUtil::InitJSCore(array("popup"));
@@ -158,6 +158,7 @@ if (
 
 if (
 	is_array($arResult["CanView"])
+	&& isset($arResult["CanView"]['calendar'])
 	&& $arResult["CanView"]['calendar']
 	&& ToolsManager::getInstance()->checkAvailabilityByToolId('calendar')
 )
@@ -200,6 +201,7 @@ if (
 
 if (
 	is_array($arResult["CanView"])
+	&& isset($arResult["CanView"]['blog'])
 	&& !!$arResult["CanView"]['blog']
 )
 {
@@ -226,13 +228,16 @@ if(
 	is_array($arResult['CanView'])
 	&& isset($arResult['CanView']['sign'])
 	&& !!$arResult['CanView']['sign']
+    && Loader::includeModule('sign')
+	&& method_exists(\Bitrix\Sign\Config\Storage::class, 'isB2eAvailable')
+	&& \Bitrix\Sign\Config\Storage::instance()->isB2eAvailable()
 )
 {
 	$uri = new Uri($arResult['Urls']['sign']);
 	$uri->addParams(['IFRAME' => 'Y']);
 	$redirect = $uri->getUri();
 
-	$items = array_merge($items, [
+	$signItem = [
 		'sign' => [
 			'ID' => 'sign',
 			'TEXT' => $arResult['Title']['sign'],
@@ -241,9 +246,36 @@ if(
 				width: 1000 
 			})",
 			'IS_ACTIVE' => (mb_strpos($requestUri, $arResult['Urls']['sign']) === 0),
-			'URL' => $redirect
-			]
-	]);
+			'URL' => $redirect,
+		]
+	];
+
+	if (enum_exists(\Bitrix\Sign\Type\CounterType::class))
+	{
+		$signItem['sign']['COUNTER_ID'] = \Bitrix\Sign\Type\CounterType::SIGN_B2E_MY_DOCUMENTS->value;
+		$userId = (int)\Bitrix\Main\Engine\CurrentUser::get()->getId();
+		$signItem['sign']['COUNTER'] = \Bitrix\Sign\Service\Container::instance()
+			->getCounterService()
+			->get(\Bitrix\Sign\Type\CounterType::SIGN_B2E_MY_DOCUMENTS, $userId)
+		;
+	}
+
+	$items = array_merge($items, $signItem);
+}
+
+if (
+	Loader::includeModule('biconnector')
+	&& class_exists('\Bitrix\BIConnector\Superset\Scope\ScopeService')
+)
+{
+	/** @see \Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorProfile::getMenuItemData */
+	$menuItem = \Bitrix\BIConnector\Superset\Scope\ScopeService::getInstance()->prepareScopeMenuItem(
+		\Bitrix\BIConnector\Superset\Scope\ScopeService::BIC_SCOPE_PROFILE
+	);
+	if ($menuItem)
+	{
+		$items[] = $menuItem;
+	}
 }
 
 if (
@@ -259,23 +291,27 @@ if (
 
 	CModule::includeModule('tasks');
 
-	$efficiencyUrl = (
+	if (($arResult['User']['IS_COLLABER'] ?? 'N') !== 'Y')
+	{
+		$efficiencyUrl = (
 		$arResult['isExtranetSite']
 			? SITE_DIR . "contacts/personal/user/{$userId}/tasks/effective/"
 			: SITE_DIR . "company/personal/user/{$userId}/tasks/effective/"
-	);
-	$efficiencyCounter = (KpiLimit::isLimitExceeded() ? 0 : Counter::getInstance($userId)->get(Name::EFFECTIVE));
+		);
+		$efficiencyCounter = (TaskLimit::isLimitExceeded() ? 0 : Counter::getInstance($userId)->get(Name::EFFECTIVE));
 
-	$items['effective_counter'] = [
-		'TEXT' => GetMessage('SONET_UM_EFFICIENCY'),
-		'ON_CLICK' => "BX.SidePanel.Instance.open('{$efficiencyUrl}', { width: 1000 })",
-		'COUNTER' => $efficiencyCounter,
-		'MAX_COUNTER_SIZE' => 100,
-		'COUNTER_ID' => 'effective_counter',
-		'ID' => 'effective_counter',
-		'CLASS' => 'effective_counter',
-		'IS_ACTIVE' => (mb_strpos($requestUri, $efficiencyUrl) === 0),
-	];
+		$items['effective_counter'] = [
+			'TEXT' => GetMessage('SONET_UM_EFFICIENCY'),
+			'ON_CLICK' => "BX.SidePanel.Instance.open('{$efficiencyUrl}', { width: 1000 })",
+			'ID' => 'effective_counter',
+			'CLASS' => 'effective_counter',
+			'IS_ACTIVE' => (mb_strpos($requestUri, $efficiencyUrl) === 0),
+			'SUPER_TITLE' => [
+				'TEXT' => $efficiencyCounter . '%',
+				'CLASS' => 'effective_counter',
+			],
+		];
+	}
 }
 
 if (

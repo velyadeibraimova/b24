@@ -1,16 +1,24 @@
 <?php
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 
+use Bitrix\Extranet\Service\ServiceContainer;
+use Bitrix\Intranet;
+use Bitrix\Main\Engine\CurrentUser;
+
 if (!\CModule::IncludeModule('intranet'))
 {
 	return;
+}
+
+if (ServiceContainer::getInstance()->getCollaberService()->isCollaberById((int)CurrentUser::get()->getId()))
+{
+	LocalRedirect(SITE_DIR . 'online/');
 }
 
 IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/extranet/public/index_b24.php');
 
 $APPLICATION->SetPageProperty("NOT_SHOW_NAV_CHAIN", "Y");
 $APPLICATION->SetPageProperty("title", htmlspecialcharsbx(COption::GetOptionString("main", "site_name", GetMessage("EXTRANET_INDEXB24_PAGE_TITLE"))));
-use Bitrix\Intranet;
 ?>
 <?php
 $APPLICATION->IncludeComponent(
@@ -23,7 +31,7 @@ $APPLICATION->IncludeComponent(
 		"ITEMS_COUNT" => "32",
 		"NAME_TEMPLATE" => CSite::GetNameFormat(),
 		"SHOW_LOGIN" => "Y",
-		"DATE_TIME_FORMAT" => "d.m.Y H:i:s",
+		"DATE_TIME_FORMAT" => "#DATE_TIME_FORMAT#",
 		"SHOW_YEAR" => "M",
 		"CACHE_TYPE" => "A",
 		"CACHE_TIME" => "3600",

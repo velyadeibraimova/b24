@@ -5,7 +5,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Intranet\Integration\Socialnetwork\Chat\GroupChat;
+use Bitrix\Intranet\Integration\Socialnetwork\Url\GroupUrl;
 use Bitrix\Main\Text\Emoji;
+use Bitrix\Socialnetwork\Collab\CollabFeature;
 
 final class CB24SearchTitle
 {
@@ -27,7 +30,7 @@ final class CB24SearchTitle
 		$userPageURLTemplate = \Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/', SITE_ID).'user/#user_id#/';
 
 		$userFilter = array(
-			'ACTIVE' => 'Y',
+			'=ACTIVE' => 'Y',
 			'!=EXTERNAL_AUTH_ID' => \Bitrix\Main\UserTable::getExternalUserTypes(),
 		);
 
@@ -260,7 +263,7 @@ final class CB24SearchTitle
 		{
 			$cacheTtl = 3153600;
 			$cacheId = 'search_title_sonetgroups_'.md5(serialize($groupFilter).$extranetSiteId.$groupPageURLTemplate);
-			$cacheDir = '/intranet/search/sonetgroups/';
+			$cacheDir = '/intranet/search/sonetgroups_v2/';
 
 			$obCache = new CPHPCache;
 			if($obCache->InitCache($cacheTtl, $cacheId, $cacheDir))
@@ -285,7 +288,7 @@ final class CB24SearchTitle
 				$groupFilter,
 				false,
 				false,
-				array("ID", "NAME", "IMAGE_ID", "DESCRIPTION")
+				array("ID", "NAME", "IMAGE_ID", "DESCRIPTION", 'TYPE')
 			);
 
 			$groupList = $groupIdList = array();
@@ -326,6 +329,8 @@ final class CB24SearchTitle
 				}
 			}
 
+			$chatIds = GroupChat::getChatIds($groupIdList);
+
 			foreach($groupList as $group)
 			{
 				$image = CFile::ResizeImageGet(
@@ -359,10 +364,16 @@ final class CB24SearchTitle
 					}
 				}
 
+				$chatId = $chatIds[(int)$group['ID']] ?? 0;
+
 				$result[] = array(
 					'ID' => $group['ID'],
 					'NAME' => htmlspecialcharsbx($group['NAME']),
-					'URL' => str_replace('#group_id#', $group['ID'], $groupPageURLTemplate),
+					'URL' => GroupUrl::get(
+						(int)$group['ID'],
+						(string)$group['TYPE'],
+						$chatId
+					),
 					'MODULE_ID' => '',
 					'PARAM1' => '',
 					'ITEM_ID' => 'G'.$group['ID'],
@@ -370,7 +381,9 @@ final class CB24SearchTitle
 					'TYPE' => 'sonetgroups',
 					'IS_EXTRANET' => $isExtranet,
 					'SITE' => $site,
-					'IS_MEMBER' => in_array($group['ID'], $memberGroupIdList)
+					'IS_MEMBER' => in_array($group['ID'], $memberGroupIdList),
+					'GROUP_TYPE' => $group['TYPE'],
+					'GROUP_CHAT_ID' => $chatId,
 				);
 			}
 
@@ -399,10 +412,10 @@ final class CB24SearchTitle
 			$timestamp = time();
 		}
 
-		$result = array();
-		if ($entityType == 'sonetgroups')
+		$result = [];
+		if ($entityType === 'sonetgroups' || $entityType === 'collabs')
 		{
-			$result = array(
+			$result = [
 				'id' => 'G'.$arEntity["ID"],
 				'entityId' => $arEntity["ID"],
 				'name' => $arEntity["NAME"],
@@ -410,8 +423,10 @@ final class CB24SearchTitle
 				'desc' => empty($arEntity['DESCRIPTION'])? '': (TruncateText($arEntity['DESCRIPTION'], 100)),
 				'isExtranet' => ($arEntity['IS_EXTRANET'] ? "Y" : "N"),
 				'site' => $arEntity['SITE'],
-				'isMember' => (isset($arEntity['IS_MEMBER']) && $arEntity['IS_MEMBER'] ? "Y" : "N")
-			);
+				'isMember' => (isset($arEntity['IS_MEMBER']) && $arEntity['IS_MEMBER'] ? "Y" : "N"),
+				'groupType' => $arEntity['GROUP_TYPE'],
+				'dialogId' => GroupUrl::getDialogId((int)$arEntity['GROUP_CHAT_ID'])
+			];
 			$result['checksum'] = md5(serialize($result));
 			$result['timestamp'] = $timestamp;
 		}
@@ -543,9 +558,11 @@ final class CB24SearchTitle
 			$bSocialnetworkIncluded = \Bitrix\Main\Loader::includeModule('socialnetwork');
 		}
 
+		$extranetIncluded = Bitrix\Main\Loader::includeModule('extranet');
+
 		if ($bExtranetSite === null)
 		{
-			$bExtranetSite = (\Bitrix\Main\Loader::includeModule('extranet') && CExtranet::IsExtranetSite());
+			$bExtranetSite = $extranetIncluded && CExtranet::IsExtranetSite();
 		}
 
 		for($i = 0; $i < $arParams["NUM_CATEGORIES"]; $i++)
@@ -593,7 +610,10 @@ final class CB24SearchTitle
 				)
 				{
 					$arResult["customSonetGroupsCategoryId"] = $i;
-					$arResult["CATEGORIES"][$i]["ITEMS"] = CB24SearchTitle::getSonetGroups($searchString);
+					$arResult["CATEGORIES"][$i]["ITEMS"] = array_filter(
+						CB24SearchTitle::getSonetGroups($searchString),
+						fn ($group) => $group['GROUP_TYPE'] !== 'collab'
+					);
 
 					if ($arResult["customResultEmpty"] && !empty($arResult["CATEGORIES"][$i]["ITEMS"]))
 					{
@@ -603,6 +623,29 @@ final class CB24SearchTitle
 					foreach($arResult["CATEGORIES"][$i]["ITEMS"] as $key => $arItem)
 					{
 						$clientDbItem = CB24SearchTitle::convertAjaxToClientDb($arItem, 'sonetgroups');
+						$arResult["CATEGORIES"][$i]["ITEMS"][$key]['CHECKSUM'] = $clientDbItem['checksum'];
+					}
+				}
+				elseif (
+					$categoryCode == 'custom_collabs'
+					&& $bSocialnetworkIncluded
+					&& $extranetIncluded
+					&& CollabFeature::isOn()
+				)
+				{
+					$arResult["CATEGORIES"][$i]["ITEMS"] = array_filter(
+						CB24SearchTitle::getSonetGroups($searchString),
+						fn ($group) => $group['GROUP_TYPE'] === 'collab'
+					);
+
+					if ($arResult["customResultEmpty"] && !empty($arResult["CATEGORIES"][$i]["ITEMS"]))
+					{
+						$arResult["customResultEmpty"] = false;
+					}
+
+					foreach($arResult["CATEGORIES"][$i]["ITEMS"] as $key => $arItem)
+					{
+						$clientDbItem = CB24SearchTitle::convertAjaxToClientDb($arItem, 'collabs');
 						$arResult["CATEGORIES"][$i]["ITEMS"][$key]['CHECKSUM'] = $clientDbItem['checksum'];
 					}
 				}

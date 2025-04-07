@@ -32,7 +32,9 @@ if ($presetId = \CUserOptions::GetOption("intranet", "left_menu_preset"))
 $defaultItems = $arResult;
 $menuUser = new LeftMenu\User();
 $menu = new LeftMenu\Menu($defaultItems, $menuUser);
-$activePreset = LeftMenu\Preset\Manager::getPreset();
+$isCollaber = Loader::includeModule('extranet')
+	&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById(\Bitrix\Intranet\CurrentUser::get()->getId());
+$activePreset = LeftMenu\Preset\Manager::getPreset($isCollaber ? 'collab' : null);
 $menu->applyPreset($activePreset);
 $visibleItems = $menu->getVisibleItems();
 $firstPageChanger = ToolsManager::getInstance()->getFirstPageChanger();
@@ -45,7 +47,7 @@ if ($firstPageChanger->checkNeedChanges())
 $arResult = [
 	'IS_ADMIN' => $menuUser->isAdmin(),
 	'IS_EXTRANET' => isModuleInstalled("extranet") && SITE_ID    == \COption::GetOptionString("extranet", "extranet_site"),
-	'SHOW_PRESET_POPUP' => \COption::GetOptionString("intranet", "show_menu_preset_popup", "N") == "Y",
+	'SHOW_PRESET_POPUP' => \COption::GetOptionString("intranet", "show_menu_preset_popup", "N") == "Y" && $menuUser->isAdmin(),
 	'SHOW_SITEMAP_BUTTON' => false,
 	'ITEMS' => [
 		'show' => $visibleItems,

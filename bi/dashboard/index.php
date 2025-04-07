@@ -9,8 +9,7 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
  */
 
 if (
-	!Loader::includeModule('report')
-	|| !Loader::includeModule('biconnector')
+	!Loader::includeModule('biconnector')
 	|| !Loader::includeModule('crm')
 )
 {
@@ -26,7 +25,6 @@ else
 			'SEF_FOLDER' => '/',
 			'SEF_URL_TEMPLATES' => [
 				'list' => 'bi/dashboard/',
-				'detail' => 'bi/dashboard/detail/#dashboardId#/'
 			],
 		]
 	);
