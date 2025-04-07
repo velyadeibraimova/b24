@@ -53,9 +53,20 @@ try {
             case 'edit':
                 $ID = $_POST['IBLOCK_ELEMENT_ID'];
                 $procs = $_POST['PROP4'];
-                unset($_POST['PROP4']);
-                CIBLockELement::SetPropertyValues($ID, DoctorsTable::IBLOCK_ID, $procs, "PROP4");
-                if (DoctorsTable:: update($ID, $_POST)) {
+                //unset($_POST['PROP4']);
+                //CIBLockELement::SetPropertyValues($ID, DoctorsTable::IBLOCK_ID, $procs, "PROP4");
+
+                $iblockElement = new \CIBlockElement();
+                $iblockElement->Update($ID, [
+                    'NAME' => $_POST['NAME'],
+                    'PROPERTY_VALUES' => [
+                        'PROP1' => $_POST['PROP1'],
+                        'PROP2' => $_POST['PROP2'],
+                        'PROP3' => $_POST['PROP3'],
+                        'PROP4' => $_POST['PROP4'],
+                    ]
+                ]);
+                if ($iblockElement) {
                     header("Location: /doctors");
                     exit();
                 } else {
@@ -159,7 +170,7 @@ try {
             <form class="doctor-add-form" method="POST">
                 <h2><?= $action === 'edit' ? Loc::getMessage('MESS4') : Loc::getMessage('MESS8') ?></h2>
 
-                <input type="text" name="ELEMENT.NAME"
+                <input type="text" name="NAME"
                        value="<?= htmlspecialchars($doctor['NAME'] ?? '') ?>"
                        placeholder="<?= Loc::getMessage('MESS9'); ?>" required>
 
