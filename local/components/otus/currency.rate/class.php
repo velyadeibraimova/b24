@@ -1,8 +1,8 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
-use Bitrix\Main\Loader,
-    Bitrix\Currency\CurrencyTable;
+use Bitrix\Main\Loader;
+use Bitrix\Currency\CurrencyTable;
 
 class CurrencyRateComponent extends CBitrixComponent
 {
@@ -21,7 +21,7 @@ class CurrencyRateComponent extends CBitrixComponent
 
         // Получаем список доступных валют
         $currencies = CurrencyTable::getList([
-            'select' => ['CURRENCY', 'RATE', 'NAME'],
+            'select' => ['CURRENCY', 'AMOUNT', 'AMOUNT_CNT'],
             'filter' => ['BASE' => 'N']
         ])->fetchAll();
         
@@ -32,11 +32,12 @@ class CurrencyRateComponent extends CBitrixComponent
         $this->arResult['SELECTED_CURRENCY'] = $selectedCurrency;
         
         $currencyRate = CurrencyTable::getList([
-            'select' => ['RATE'],
+            'select' => ['AMOUNT', 'AMOUNT_CNT'],
             'filter' => ['CURRENCY' => $selectedCurrency]
         ])->fetch();
         
-        $this->arResult['RATE'] = $currencyRate['RATE'];
+        // Вычисляем курс
+        $this->arResult['RATE'] = $currencyRate['AMOUNT'] / $currencyRate['AMOUNT_CNT'];
 
         $this->includeComponentTemplate();
     }
