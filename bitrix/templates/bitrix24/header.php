@@ -115,7 +115,7 @@ $asset->addJs(SITE_TEMPLATE_PATH . '/bitrix24.js', true);
 ThemePicker::getInstance()->showHeadAssets();
 
 $bodyClass = 'template-bitrix24';
-$bodyClass .= ' bitrix24-' . ThemePicker::getInstance()->getCurrentBaseThemeId() . '-theme';
+$bodyClass .= ' ' . ThemePicker::getInstance()->getBodyClasses();
 
 $imBarExists =
 	Loader::includeModule('im') &&
@@ -174,7 +174,7 @@ $APPLICATION->ShowViewContent('im');
 $APPLICATION->ShowViewContent('im-fullscreen');
 
 $layoutMode = '';
-if (CUserOptions::GetOption('intranet', 'left_menu_collapsed') === 'Y')
+if (\Bitrix\Intranet\UI\LeftMenu\Menu::isCollapsed())
 {
 	$layoutMode .= ' menu-collapsed-mode';
 }
@@ -237,7 +237,10 @@ if ($isBitrix24Cloud)
 							else if (document.addEventListener)
 							{
 								document.addEventListener("DOMContentLoaded", function() {
-									time.innerHTML = formatTime(hours, minutes, 0, isAmPmMode);
+									if (time)
+									{
+										time.innerHTML = formatTime(hours, minutes, 0, isAmPmMode);
+									}
 								});
 							}
 

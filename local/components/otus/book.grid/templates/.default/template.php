@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @global $APPLICATION
  * @global $component
  */
+
 use Bitrix\Main\Localization\Loc;
 
 \Bitrix\Main\Loader::includeModule('ui');
@@ -32,6 +33,12 @@ $APPLICATION->IncludeComponent(
 //];
 //
 //Bitrix\UI\Toolbar\Facade\Toolbar::addButton($exportCurrentTableButton);
+
+$linkButton = new \Bitrix\UI\Buttons\Button([
+    "onclick" => "BX.BookGrid.createTestElement",
+    "text" => "Создать новый элемент"
+]);
+\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($linkButton);
 ?>
 
 <?php
@@ -88,10 +95,13 @@ $APPLICATION->IncludeComponent(
             ['NAME' => 50, 'VALUE' => 50],
         ],
     ],
-    $component,
+    $component
 );
+
+
 if (!empty($arParams['AJAX_LOADER'])) { ?>
     <script>
+        alert(1);
         BX.addCustomEvent('Grid::beforeRequest', function (gridData, argse) {
             if (argse.gridId !== '<?=$arResult['FILTER_ID'];?>') {
                 return;
@@ -106,3 +116,5 @@ if (!empty($arParams['AJAX_LOADER'])) { ?>
         });
     </script>
 <?php } ?>
+
+

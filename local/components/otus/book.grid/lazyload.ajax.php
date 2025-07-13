@@ -62,7 +62,7 @@ $APPLICATION->IncludeComponent(
         'POPUP_COMPONENT_NAME' => 'otus:book.grid',
         'POPUP_COMPONENT_TEMPLATE_NAME' => $componentData['template'] ?? '',
         'POPUP_COMPONENT_PARAMS' => $componentParams,
-    ],
+    ]
 );
 
 \CMain::FinalActions();

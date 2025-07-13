@@ -10,16 +10,80 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Query\Result;
 
 Loader::includeModule('aholin.crmcustomtab');
+
 class BookGrid extends \CBitrixComponent implements Controllerable
 {
     public function configureActions(): array
     {
-        return [];
+        return [
+            'deleteElement' => [
+                'prefilters' => [],
+            ],
+            'createTestElement' => [
+                'prefilters' => [],
+            ],
+        ];
     }
 
-    private function getElementActions(): array
+    private function getElementActions(int $id): array
     {
-        return [];
+        return [
+            [
+                'text' => 'Удалить',
+                'onclick' => "BX.BookGrid.deleteElement('" . $this->arResult['FILTER_ID'] . "', " . $id . ")",
+            ],
+        ];
+    }
+
+    public function deleteElementAction(int $id): array
+    {
+        $result = [
+            'success' => false,
+            'errors' => [],
+        ];
+
+        try {
+            $deleteResult = BookTable::delete($id);
+
+            if ($deleteResult->isSuccess()) {
+                $result['success'] = true;
+            } else {
+                $result['errors'] = $deleteResult->getErrorMessages();
+            }
+        } catch (\Exception $e) {
+            $result['errors'][] = $e->getMessage();
+        }
+
+        return $result;
+    }
+
+    public function createTestElementAction(): array
+    {
+        $result = [
+            'success' => false,
+            'errors' => [],
+            'id' => null,
+        ];
+
+        try {
+            $addResult = BookTable::add([
+                'TITLE' => 'Тестовая книга ' . rand(1000, 9999),
+                'YEAR' => rand(1900, date('Y')),
+                'PAGES' => rand(50, 500),
+                'PUBLISH_DATE' => new \Bitrix\Main\Type\DateTime(),
+            ]);
+
+            if ($addResult->isSuccess()) {
+                $result['success'] = true;
+                $result['id'] = $addResult->getId();
+            } else {
+                $result['errors'] = $addResult->getErrorMessages();
+            }
+        } catch (Exception $e) {
+            $result['errors'][] = $e->getMessage();
+        }
+
+        return $result;
     }
 
     private function getHeaders(): array
@@ -105,13 +169,11 @@ class BookGrid extends \CBitrixComponent implements Controllerable
             ->setFilter($filter)
             ->setLimit($nav->getLimit())
             ->setOffset($nav->getOffset())
-            ->setOrder($sort['sort'])
-        ;
+            ->setOrder($sort['sort']);
 
         $countQuery = BookTable::query()
             ->setSelect(['ID'])
-            ->setFilter($filter)
-        ;
+            ->setFilter($filter);
         $nav->setRecordCount($countQuery->queryCountTotal());
 
         $bookIds = array_column($bookIdsQuery->exec()->fetchAll(), 'ID');
@@ -211,7 +273,7 @@ class BookGrid extends \CBitrixComponent implements Controllerable
                     'AUTHORS' => implode(', ', $book['AUTHORS']),
                     'PUBLISH_DATE' => $book['PUBLISH_DATE']->format('d.m.Y'),
                 ],
-                'actions' => $this->getElementActions(),
+                'actions' => $this->getElementActions($book['ID'])
             ];
         }
 
