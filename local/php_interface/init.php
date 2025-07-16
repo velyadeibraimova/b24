@@ -16,6 +16,10 @@ if (file_exists(__DIR__ . '/autoloader.php')) {
     require_once(__DIR__ . '/autoloader.php');
 }
 
+if (file_exists(__DIR__ . '/src/autoloader.php')) {
+    require_once (__DIR__ . '/src/autoloader.php');
+}
+
 /*
 * Автозагрузка (Второй вариант)
 * */

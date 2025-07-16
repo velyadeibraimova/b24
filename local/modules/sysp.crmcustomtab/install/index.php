@@ -159,7 +159,7 @@ class sysp_crmcustomtab extends CModule
                     }
                 }
             }
-            
+
             $d = new Directory($namespace_directory);
             if ($d->isExists()) {
                 $children = $d->getChildren();
@@ -222,13 +222,13 @@ class sysp_crmcustomtab extends CModule
         $proc3 = ProceduresTable::add(['NAME' => Loc::getMessage('DEMO_PROC3_NAME')]);
 
         $doctor1 = DoctorsTable::add([
-            'NAME' => 'slug_' . rand(0, 1000) . '_' . time(),
+            'NAME' => Loc::getMessage('DEMO_DOCTOR1_LASTNAME') . " " . Loc::getMessage('DEMO_DOCTOR1_FIRSTNAME') . " " . Loc::getMessage('DEMO_DOCTOR1_PATRONYMIC'),
             'PROP1' => Loc::getMessage('DEMO_DOCTOR1_LASTNAME'),
             'PROP2' => Loc::getMessage('DEMO_DOCTOR1_FIRSTNAME'),
             'PROP3' => Loc::getMessage('DEMO_DOCTOR1_PATRONYMIC'),
         ]);
         $doctor2 = DoctorsTable::add([
-            'NAME' => 'slug_' . rand(0, 1000) . '_' . time(),
+            'NAME' => Loc::getMessage('DEMO_DOCTOR2_LASTNAME') . " " . Loc::getMessage('DEMO_DOCTOR2_FIRSTNAME') . " " . Loc::getMessage('DEMO_DOCTOR2_PATRONYMIC'),
             'PROP1' => Loc::getMessage('DEMO_DOCTOR2_LASTNAME'),
             'PROP2' => Loc::getMessage('DEMO_DOCTOR2_FIRSTNAME'),
             'PROP3' => Loc::getMessage('DEMO_DOCTOR2_PATRONYMIC'),
@@ -299,6 +299,7 @@ class sysp_crmcustomtab extends CModule
             }
         }
     }
+
     public function installEvents(): void
     {
         $eventManager = EventManager::getInstance();
