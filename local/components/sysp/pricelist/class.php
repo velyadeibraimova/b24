@@ -32,7 +32,6 @@ class DoctorsComponent extends CBitrixComponent
 
         try {
             $filter = $this->prepareFilter();
-            file_put_contents($_SERVER["DOCUMENT_ROOT"] . "/ttеt.txt", print_r($filter, true), FILE_APPEND);
             $this->prepartFilterFields();
             $this->prepareGrid($filter);
             $this->IncludeComponentTemplate();
@@ -67,7 +66,6 @@ class DoctorsComponent extends CBitrixComponent
         if (!empty($filterData['COST_to'])) {
             $filter['<COST'] = $filterData['COST_to'];
         }
-print_r($filter);
         return $filter;
     }
 
@@ -106,7 +104,7 @@ print_r($filter);
                 'sort' => 'PROCEDURE_NAME',
                 'default' => true,
             ],
-            ['id' => 'DOCTOR', 'name' => Loc::getMessage('DOCTOR'), 'sort' => 'DOCTOR_LASTNAME', 'default' => true],
+            ['id' => 'DOCTOR', 'name' => Loc::getMessage('DOCTOR'), 'sort' => 'DOCTOR_PROP1', 'default' => true],
             ['id' => 'COST', 'name' => Loc::getMessage('COST'), 'sort' => 'COST', 'default' => true],
             [
                 'id' => 'RECOMMENDATIONS',
@@ -146,7 +144,7 @@ print_r($filter);
             ->setOrder($sort['sort']);
         $res = $query->exec();
         $result = $res->fetchAll();
-
+        file_put_contents($_SERVER["DOCUMENT_ROOT"] . "/ttеt.txt", print_r(1111, true), FILE_APPEND);
         foreach ($result as $row) {
             $this->arResult['GRID']['PRICE_LIST'][] = [
                 'data' => [
