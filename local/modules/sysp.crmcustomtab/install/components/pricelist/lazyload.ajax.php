@@ -1,4 +1,4 @@
-11111111111111<?php
+<?php
 
 use Bitrix\Main\Application;
 

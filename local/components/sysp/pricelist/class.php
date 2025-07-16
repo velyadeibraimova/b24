@@ -27,6 +27,8 @@ class DoctorsComponent extends CBitrixComponent
     public function executeComponent()
     {
 
+        file_put_contents($_SERVER["DOCUMENT_ROOT"] . "/ttеt.txt", print_r($this->arResult, true), FILE_APPEND);
+
         $this->_checkModules();
         $this->id = 'PRICE_LIST';
 
@@ -66,6 +68,7 @@ class DoctorsComponent extends CBitrixComponent
         if (!empty($filterData['COST_to'])) {
             $filter['<COST'] = $filterData['COST_to'];
         }
+
         return $filter;
     }
 
@@ -104,7 +107,7 @@ class DoctorsComponent extends CBitrixComponent
                 'sort' => 'PROCEDURE_NAME',
                 'default' => true,
             ],
-            ['id' => 'DOCTOR', 'name' => Loc::getMessage('DOCTOR'), 'sort' => 'DOCTOR_PROP1', 'default' => true],
+            ['id' => 'DOCTOR', 'name' => Loc::getMessage('DOCTOR'), 'sort' => 'DOCTOR_LASTNAME', 'default' => true],
             ['id' => 'COST', 'name' => Loc::getMessage('COST'), 'sort' => 'COST', 'default' => true],
             [
                 'id' => 'RECOMMENDATIONS',
@@ -144,7 +147,7 @@ class DoctorsComponent extends CBitrixComponent
             ->setOrder($sort['sort']);
         $res = $query->exec();
         $result = $res->fetchAll();
-        file_put_contents($_SERVER["DOCUMENT_ROOT"] . "/ttеt.txt", print_r(1111, true), FILE_APPEND);
+
         foreach ($result as $row) {
             $this->arResult['GRID']['PRICE_LIST'][] = [
                 'data' => [

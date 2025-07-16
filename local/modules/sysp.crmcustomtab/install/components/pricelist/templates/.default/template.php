@@ -85,4 +85,4 @@ $APPLICATION->IncludeComponent(
     </script>
 <?php endif; ?>
 
-<div class="new-component-container">11111111111111</div>
+<div class="new-component-container"></div>
