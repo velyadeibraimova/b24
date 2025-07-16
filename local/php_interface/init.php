@@ -36,3 +36,11 @@ function pr($var, $type = false)
         print_r($var);
     echo '</pre>';
 }
+
+\Bitrix\Main\UI\Extension::load([
+    //'helper.log_events',
+	//'ajax.all_ajax_handler',
+    //'homework.begin_date_button'
+]);
+
+\Bitrix\Main\UI\Extension::load(['otus.workday_confirm']);

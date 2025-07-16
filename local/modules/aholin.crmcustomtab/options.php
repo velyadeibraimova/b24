@@ -20,6 +20,7 @@ Loader::includeModule('main');
 $module_id = htmlspecialcharsbx('' != $request['mid'] ? $request['mid'] : $request['id']);
 
 Loader::includeModule($module_id);
+Loader::includeModule('crm');
 $aTabsStatic = [
     [
         'DIV' => 'crm',
@@ -34,6 +35,20 @@ $aTabsStatic = [
                 [
                     'text',
                     50,
+                ],
+            ],
+            [
+                'CRM_ENTITY_TYPE_ID',
+                Loc::getMessage('CRM_ENTITY_TYPE_ID'),
+                \CCrmOwnerType::Deal,
+                [
+                    'multiselectbox',
+                    [
+                        \CCrmOwnerType::Company => Loc::getMessage('COMPANY_TITLE'),
+                        \CCrmOwnerType::Deal => Loc::getMessage('DEAL_TITLE'),
+                        \CCrmOwnerType::Contact => Loc::getMessage('CONTACT_TITLE'),
+                        \CCrmOwnerType::Lead => Loc::getMessage('LEAD_TITLE'),
+                    ],
                 ],
             ],
         ]
@@ -52,20 +67,10 @@ if ($request->isPost() && check_bitrix_sessid()) {
                 continue;
             }
 
-            if ($arOption['note']) {
-
-                continue;
-            }
-
             $optionName = $arOption[0];
             if ($request['apply']) {
 
                 $optionValue = $request->getPost($optionName);
-                if (in_array($optionName, ['ACTIVE'], true)) {
-                    if ('' == $optionValue) {
-                        $optionValue = 'N';
-                    }
-                }
 
                 if (!empty($optionValue || 0 === $optionValue)) {
                     Option::set($module_id, $optionName, is_array($optionValue) ? implode(',', $optionValue) : $optionValue);
@@ -107,6 +112,7 @@ $tabControl->Begin();
     ?>
 
     <input type='submit' name='apply' value='<?= Loc::getMessage('MAIN_SAVE') ?>' class='adm-btn-save'/>
+    <input type='submit' name='default' value='<?= Loc::getMessage('MAIN_DEFAULT') ?>' class='adm-btn'/>
 
     <?php
     echo(bitrix_sessid_post());
