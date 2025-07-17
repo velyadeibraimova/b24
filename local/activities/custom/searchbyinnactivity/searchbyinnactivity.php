@@ -57,14 +57,11 @@ class CBPSearchByInnActivity extends BaseActivity
         $dadata = new Dadata($token, $secret);
         $dadata->init();
         $response = $dadata->suggest("party", [
-            "query" => $this->arProperties['Inn'],
+            "query" => $this->Inn,
             "count" => 1
         ]);
         $dadata->close();
 
-        // Логируем ответ Dadata
-        Debug::writeToFile(print_r($this->arProperties, true), 'arProperties', '/upload/dadata_log.txt');
-        //Debug::writeToFile($response['suggestions'][0]['value'], 'Dadata response', '/upload/dadata_log.txt');
         $companyName = 'Компания не найдена!';
         if (!empty($response)) { // если копания найдена
             $companyName = $response['suggestions'][0]['value']; // получаем имя компании из первого элемента
@@ -77,7 +74,6 @@ class CBPSearchByInnActivity extends BaseActivity
 
                 $result = \Bitrix\Crm\CompanyTable::add($companyData);
                 // Логируем результат создания компании
-                //Debug::writeToFile(print_r($result, true), 'Company add result', '/upload/dadata_log.txt');
                 if ($result->isSuccess()) {
                     $companyId = $result->getId();
                     $rootActivity = $this->GetRootActivity(); // получаем объект активити
