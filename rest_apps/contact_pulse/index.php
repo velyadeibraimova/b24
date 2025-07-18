@@ -57,7 +57,6 @@ if (count($arContacts) == 1) {
 } else {
     $batch = [];
 
-    //чтобы не усложнять алгоритм, предполагаю, что к сущности не будет привязано больше 50 контактов ))
     foreach ($arContacts as $arContact) {
         $batch[] = [
             'method' => 'crm.contact.update',
