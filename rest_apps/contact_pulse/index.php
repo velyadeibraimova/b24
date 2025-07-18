@@ -21,7 +21,7 @@ const VALID_PROVIDER_TYPES = ['CALL', 'EMAIL', 'TASKS_TASK'];
 $activityId = (int)$_REQUEST['data']['FIELDS']['ID'];
 
 $arActivity = CRest::call('crm.activity.get', ['id' => $activityId]);
-
+file_put_contents($_SERVER["DOCUMENT_ROOT"] . "/ttеt.txt", print_r($arActivity, true), FILE_APPEND);
 if (
     empty($arActivity['result'])
     || !in_array($arActivity['result']['PROVIDER_TYPE_ID'], VALID_PROVIDER_TYPES)) {

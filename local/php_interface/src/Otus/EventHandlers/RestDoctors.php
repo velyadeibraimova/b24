@@ -8,7 +8,7 @@ use Bitrix\Rest\RestException;
 use Bitrix\Main\Context;
 use Otus\Models\Doctors\Model;
 
-class RestDoctors extends \IRestService
+class RestDoctors //extends \IRestService
 {
     const LIST_LIMIT = 5;
 
@@ -40,11 +40,15 @@ class RestDoctors extends \IRestService
     {
         try {
             $model = new Model();
-            $request = Context::getCurrent()->getRequest();
-            $data = $request->getQueryList()->toArray();
-            return $model->add($data);
-
+            // Логируем входящие параметры
+            file_put_contents('/rest_doctors_add.log', "INPUT: " . print_r($arParams, true) . "\n", FILE_APPEND);
+            $result = $model->add($arParams);
+            // Логируем результат
+            file_put_contents('/rest_doctors_add.log', "RESULT: " . print_r($result, true) . "\n", FILE_APPEND);
+            return $result;
         } catch (\Exception $e) {
+            // Логируем ошибку
+            file_put_contents('/rest_doctors_add.log', "ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
             throw new RestException($e->getMessage());
         }
     }
@@ -60,9 +64,15 @@ class RestDoctors extends \IRestService
     {
         try {
             $model = new Model();
-            $getListParams = array_merge($arParams, self::getNavData($navStart, true));
+            // Обработка пагинации
+            $limit = isset($arParams['limit']) ? (int)$arParams['limit'] : 50;
+            $offset = isset($arParams['start']) ? (int)$arParams['start'] : 0;
+            $getListParams = [
+                'filter' => $arParams['filter'] ?? [],
+                'limit' => $limit,
+                'offset' => $offset,
+            ];
             return $model->getList($getListParams);
-
         } catch (\Exception $e) {
             throw new RestException($e->getMessage());
         }
@@ -78,10 +88,16 @@ class RestDoctors extends \IRestService
     public static function get($arParams, $navStart, \CRestServer $server)
     {
         try {
+            file_put_contents($_SERVER["DOCUMENT_ROOT"] . '/rest_doctors_get.txt', "INPUT: " . print_r($arParams, true) . "\n", FILE_APPEND);
             $model = new Model();
-            return $model->getDoctor($arParams['slug']);
-
+            if (!isset($arParams['ID']) || empty($arParams['ID'])) {
+                throw new RestException('Parameter slug is required');
+            }
+            $result = $model->getDoctorById($arParams['ID']);
+            file_put_contents($_SERVER["DOCUMENT_ROOT"] . '/rest_doctors_get.txt', "RESULT: " . print_r($result, true) . "\n", FILE_APPEND);
+            return $result;
         } catch (\Exception $e) {
+            file_put_contents($_SERVER["DOCUMENT_ROOT"] . '/rest_doctors_get.txt', "ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
             throw new RestException($e->getMessage());
         }
     }
@@ -97,21 +113,34 @@ class RestDoctors extends \IRestService
     {
         try {
             $model = new Model();
-            $request = Context::getCurrent()->getRequest();
-            $data = $request->getQueryList()->toArray();
-
-            if (!isset($data['ID']) || (int)$data['ID'] <= 0) {
+            // Логируем входящие параметры
+            file_put_contents($_SERVER["DOCUMENT_ROOT"] . '/rest_doctors_update.txt', "INPUT: " . print_r($arParams, true) . "\n", FILE_APPEND);
+            if (!isset($arParams['ID']) || (int)$arParams['ID'] <= 0) {
                 throw new RestException('Unknown doctor');
             }
-
-            $oldData = $model->getDoctorById($data['ID']);
-            $data = array_merge($oldData, $data);
-
-            return $model->update($data);
+            $oldData = $model->getDoctorById($arParams['ID']);
+            if (!$oldData) {
+                throw new RestException('Doctor not found');
+            }
+            $data = array_merge($oldData, $arParams);
+            $data['SLUG'] = $data['SLUG'] ?? $oldData['NAME'] ?? 'test-name';
+            $data['PROP1'] = $data['PROP1'] ?? $oldData['PROP1'] ?? '';
+            $data['PROP2'] = $data['PROP2'] ?? $oldData['PROP2'] ?? '';
+            $data['PROP3'] = $data['PROP3'] ?? $oldData['PROP3'] ?? '';
+            $data['PROP4'] = $data['PROP4'] ?? $oldData['PROP4'] ?? [];
+            file_put_contents($_SERVER["DOCUMENT_ROOT"]  . '/rest_doctors_update.txt', "DATA TO UPDATE: " . print_r($data, true) . "\n", FILE_APPEND);
+            $result = $model->update($data);
+            $result = $model->update($data);
+            // Логируем результат
+            file_put_contents($_SERVER["DOCUMENT_ROOT"] . '/rest_doctors_update.txt', "RESULT: " . print_r($result, true) . "\n", FILE_APPEND);
+            return $result;
         } catch (\Exception $e) {
+            // Логируем ошибку
+            file_put_contents($_SERVER["DOCUMENT_ROOT"] . '/rest_doctors_update.txt', "ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
             throw new RestException($e->getMessage());
         }
     }
+
 
     /**
      * @param $arParams
@@ -124,14 +153,11 @@ class RestDoctors extends \IRestService
     {
         try {
             $model = new Model();
-            $request = Context::getCurrent()->getRequest();
-            $data = $request->getQueryList()->toArray();
-
-            if (!isset($data['ID']) || (int)$data['ID'] <= 0) {
+            file_put_contents($_SERVER["DOCUMENT_ROOT"] . '/rest_doctors_delete.txt', "INPUT: " . print_r($arParams, true) . "\n", FILE_APPEND);
+            if (!isset($arParams['ID']) || (int)$arParams['ID'] <= 0) {
                 throw new RestException('Unknown doctor');
             }
-
-            return $model->delete($data['ID']);
+            return $model->delete($arParams['ID']);
         } catch (\Exception $e) {
             throw new RestException($e->getMessage());
         }

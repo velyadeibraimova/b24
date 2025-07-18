@@ -22,9 +22,9 @@ class Model
     {
         return DoctorsTable::getList([
                 'select' => [
-                    'LASTNAME',
-                    'FIRSTNAME',
-                    'PATRONYMIC',
+                    'PROP1',
+                    'PROP2',
+                    'PROP3',
                     'SLUG' => 'ELEMENT.NAME',
                 ],
                 'filter' => [
@@ -88,9 +88,9 @@ class Model
     {
         $arSelect = [
             'IBLOCK_ELEMENT_ID',
-            'LASTNAME',
-            'FIRSTNAME',
-            'PATRONYMIC',
+            'PROP1',
+            'PROP2',
+            'PROP3',
             'SLUG' => 'ELEMENT.NAME',
             'PROCS_IDS' => 'PROP4',
             'PROCS' => 'PROP4_ELEMENT_NAME',
@@ -100,12 +100,12 @@ class Model
         $isBooking = false;
 
         $arPropertyBooking = PropertyTable::getList([
-            'filter' => ['IBLOCK_ID' => DoctorsTable::IBLOCK_ID, 'CODE' => 'BOOKING'],
+            'filter' => ['IBLOCK_ID' => DoctorsTable::IBLOCK_ID, 'CODE' => 'ONLINE'],
         ])->fetch();
 
         if ($arPropertyBooking && Loader::includeModule('sysp.userpropbooking')) {
             $isBooking = true;
-            $arSelect[] = 'BOOKING';
+            $arSelect[] = 'ONLINE';
         }
 
         // читаем данные
@@ -120,9 +120,9 @@ class Model
         if ($isBooking) {
             $arPropertyBooking['ELEMENT_ID'] = $doctor['IBLOCK_ELEMENT_ID'];
 
-            $doctor['BOOKING'] = CIblockPropertyBooking::GetPublicViewHTML(
+            $doctor['ONLINE'] = CIblockPropertyBooking::GetPublicViewHTML(
                 $arPropertyBooking,
-                ['VALUE' => $doctor['BOOKING']],
+                ['VALUE' => $doctor['ONLINE']],
                 null
             );
         }
@@ -142,24 +142,23 @@ class Model
     {
         $arSelect = [
             'IBLOCK_ELEMENT_ID',
-            'LASTNAME',
-            'FIRSTNAME',
-            'PATRONYMIC',
+            'PROP1',
+            'PROP2',
+            'PROP3',
             'SLUG' => 'ELEMENT.NAME',
-            'PROCS_IDS' => 'PROP4',
-            'PROCS' => 'PROP4_ELEMENT_NAME',
+            'PROP4' => 'PROP4',
         ];
 
         // если есть поле онлайн-записи и модуль установлен, то добираем поле онлайн-записи
         $isBooking = false;
 
         $arPropertyBooking = PropertyTable::getList([
-            'filter' => ['IBLOCK_ID' => DoctorsTable::IBLOCK_ID, 'CODE' => 'BOOKING'],
+            'filter' => ['IBLOCK_ID' => DoctorsTable::IBLOCK_ID, 'CODE' => 'ONLINE'],
         ])->fetch();
 
         if ($arPropertyBooking && Loader::includeModule('sysp.userpropbooking')) {
             $isBooking = true;
-            $arSelect[] = 'BOOKING';
+            $arSelect[] = 'ONLINE';
         }
 
         // читаем данные
@@ -173,9 +172,9 @@ class Model
         if ($isBooking) {
             $arPropertyBooking['ELEMENT_ID'] = $doctor['IBLOCK_ELEMENT_ID'];
 
-            $doctor['BOOKING'] = CIblockPropertyBooking::GetPublicViewHTML(
+            $doctor['ONLINE'] = CIblockPropertyBooking::GetPublicViewHTML(
                 $arPropertyBooking,
-                ['VALUE' => $doctor['BOOKING']],
+                ['VALUE' => $doctor['ONLINE']],
                 null
             );
         }
@@ -189,19 +188,19 @@ class Model
      */
     public function add(array $data): ?string
     {
-        $data['LASTNAME'] = htmlspecialchars($data['LASTNAME'] ?? '');
-        $data['FIRSTNAME'] = htmlspecialchars($data['FIRSTNAME'] ?? '');
-        $data['PATRONYMIC'] = htmlspecialchars($data['PATRONYMIC'] ?? '');
-        $data['PROCS'] = $data['PROCS'] ?? [];
+        $data['PROP1'] = htmlspecialchars($data['PROP1'] ?? '');
+        $data['PROP2'] = htmlspecialchars($data['PROP2'] ?? '');
+        $data['PROP3'] = htmlspecialchars($data['PROP3'] ?? '');
+        $data['PROP4'] = $data['PROP4'] ?? [];
 
-        $slug = ($this->translit_sef($data['LASTNAME']) ?? 'unnamed') . time();
+        $slug = ($this->translit_sef($data['PROP1']) ?? 'unnamed') . time();
 
         $result = DoctorsTable::add([
             'NAME' => $slug,
-            'LASTNAME' => $data['LASTNAME'],
-            'FIRSTNAME' => $data['FIRSTNAME'],
-            'PATRONYMIC' => $data['PATRONYMIC'],
-            'PROCEDURES' => $data['PROCS'],
+            'PROP1' => $data['PROP1'],
+            'PROP2' => $data['PROP2'],
+            'PROP3' => $data['PROP3'],
+            'PROP4' => $data['PROP4'],
         ]);
 
         return ($result) ? $slug : null;
@@ -221,24 +220,24 @@ class Model
         if (isset($data['SLUG'])) {
             $data['SLUG'] = htmlspecialchars($data['SLUG']);
         }
-        if (isset($data['LASTNAME'])) {
-            $data['LASTNAME'] = htmlspecialchars($data['LASTNAME']);
+        if (isset($data['PROP1'])) {
+            $data['PROP1'] = htmlspecialchars($data['PROP1']);
         }
-        if (isset($data['FIRSTNAME'])) {
-            $data['FIRSTNAME'] = htmlspecialchars($data['FIRSTNAME']);
+        if (isset($data['PROP2'])) {
+            $data['PROP2'] = htmlspecialchars($data['PROP2']);
         }
-        if (isset($data['PATRONYMIC'])) {
-            $data['PATRONYMIC'] = htmlspecialchars($data['PATRONYMIC']);
+        if (isset($data['PROP3'])) {
+            $data['PROP3'] = htmlspecialchars($data['PROP3']);
         }
 
         $iblockElement = new \CIBlockElement();
         $result = $iblockElement->Update($data['ID'], [
             'NAME' => $data['SLUG'],
             'PROPERTY_VALUES' => [
-                'LASTNAME' => $data['LASTNAME'],
-                'FIRSTNAME' => $data['FIRSTNAME'],
-                'PATRONYMIC' => $data['PATRONYMIC'],
-                'PROCEDURES' => $data['PROCS'],
+                'PROP1' => $data['PROP1'],
+                'PROP2' => $data['PROP2'],
+                'PROP3' => $data['PROP3'],
+                'PROP4' => $data['PROP4'],
             ]
         ]);
 

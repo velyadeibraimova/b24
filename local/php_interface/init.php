@@ -65,3 +65,9 @@ EventManager::getInstance()->addEventHandler(
     'OnAfterCrmDealUpdate',
     ['Otus\EventHandlers\Crm', 'updateRequestsAfterDealChange']
 );
+
+EventManager::getInstance()->addEventHandlerCompatible(
+    'rest',
+    'OnRestServiceBuildDescription',
+    ['Otus\EventHandlers\RestDoctors', 'OnRestServiceBuildDescriptionHandler']
+);
