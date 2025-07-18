@@ -11,7 +11,7 @@ class Iblock
 {
     public static function updateDealAfterRequestChange(&$arItem)
     {
-        //получить ID инфоблока Заявок по коду
+        //получить ID инфоблока Заявок по коду (ИБ 20)
         $iblock = IblockTable::getList([
             'filter' => ['CODE' => 'requests'],
             'select' => ['ID']

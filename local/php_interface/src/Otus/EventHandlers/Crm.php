@@ -9,7 +9,7 @@ class Crm
 {
     public static function updateRequestsAfterDealChange($arDeal)
     {
-        //получить элементы списка Заявок у которых сделка равна сделке-инициатору события
+        //получить элементы списка Заявок у которых сделка равна сделке-инициатору события (ИБ 20)
         $arRequests = RequestsTable::getList([
             'filter' => ['=DEAL' => $arDeal['ID']],
         ])->fetchAll();
