@@ -24,7 +24,7 @@ class Crm
                 $result = RequestsTable::update(
                     $arRequest['IBLOCK_ELEMENT_ID'],
                     [
-                        'AMOUNT' => sprintf('%s|%s', $arDeal['OPPORTUNITY'], $arDeal['ACCOUNT_CURRENCY_ID']),
+                        'AMOUNT' => $arDeal['OPPORTUNITY'],
                         'RESPONSIBLE' => $arDeal['ASSIGNED_BY_ID'],
                     ]
                 );

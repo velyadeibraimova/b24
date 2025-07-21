@@ -52,7 +52,7 @@ function pr($var, $type = false)
     //'homework.begin_date_button'
 ]);
 
-\Bitrix\Main\UI\Extension::load(['otus.workday_confirm']);
+//\Bitrix\Main\UI\Extension::load(['otus.workday_confirm']);
 
 EventManager::getInstance()->addEventHandler(
     'iblock',

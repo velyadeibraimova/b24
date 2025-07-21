@@ -11,64 +11,79 @@ class Iblock
 {
     public static function updateDealAfterRequestChange(&$arItem)
     {
-        //получить ID инфоблока Заявок по коду (ИБ 20)
+        // 1. Получаем ID инфоблока
         $iblock = IblockTable::getList([
             'filter' => ['CODE' => 'requests'],
             'select' => ['ID']
         ])->fetch();
-        //если список не тот, прекращаем обработку
+
         if (!$iblock || $arItem['IBLOCK_ID'] != $iblock['ID']) {
             return false;
         }
-        //получить свойства
-        $arPropertyList = PropertyTable::getList([
-            'filter' => ['=IBLOCK_ID' => $iblock['ID']],
-            'select' => ['ID', 'CODE']
-        ])->fetchAll();
+
+        // 2. Обработка свойств
         $arProperty = [];
-        //пересобрать свойства, чтобы было удобнее работать
-        foreach ($arPropertyList as $property) {
-            $id = $property['ID'];
-            $code = $property['CODE'];
-            $values = $arItem['PROPERTY_VALUES'][$id] ?? null;
-            if (is_array($values)) {
-                $first = reset($values);
-                $arProperty[$code] = $first['VALUE'] ?? null;
-            } elseif (!is_null($values)) {
-                $arProperty[$code] = $values;
+        foreach ($arItem['PROPERTY_VALUES'] as $propId => $propValues) {
+            $property = PropertyTable::getList([
+                'filter' => ['=ID' => $propId],
+                'select' => ['CODE']
+            ])->fetch();
+
+            if ($property) {
+                $code = $property['CODE'];
+                foreach ($propValues as $valueData) {
+                    if (is_array($valueData) && array_key_exists('VALUE', $valueData)) {
+                        $value = $valueData['VALUE'];
+                    } else {
+                        $value = $valueData;
+                    }
+                    if ($value !== null && $value !== '') {
+                        $arProperty[$code] = ($code === 'RESPONSIBLE') ? (int)$value : $value;
+                        break;
+                    }
+                }
             }
         }
-        //отрезать валюту и форматировать сумму для сравнения
-        [$amount, $currency] = array_pad(explode('|', $arProperty['AMOUNT']), 2, null);
-        $arProperty['AMOUNT'] = number_format($amount, 2, '.', '');
-        $dealId = $arProperty['DEAL'] ?? null;
-        if (!$dealId) {
+
+        // 3. Проверка обязательных полей
+        if (empty($arProperty['DEAL'])) {
             return false;
         }
-        //получить данные сделки
+
+        // 4. Форматирование суммы
+        if (isset($arProperty['AMOUNT'])) {
+            $arProperty['AMOUNT'] = number_format((float)$arProperty['AMOUNT'], 2, '.', '');
+        }
+
+        // 5. Получение данных сделки
         $deal = DealTable::getList([
-            'filter' => ['=ID' => $dealId],
+            'filter' => ['=ID' => $arProperty['DEAL']],
             'select' => ['ID', 'OPPORTUNITY', 'ASSIGNED_BY_ID']
         ])->fetch();
+
         if (!$deal) {
             return false;
         }
-        //если ничего не изменилось, прервать работу
-        if (($arProperty['AMOUNT'] === $deal['OPPORTUNITY']) && ($arProperty['RESPONSIBLE'] === $deal['ASSIGNED_BY_ID'])) {
-            return false;
+
+        // 6. Подготовка обновления
+        $updateData = [];
+        if (isset($arProperty['AMOUNT']) && $arProperty['AMOUNT'] != $deal['OPPORTUNITY']) {
+            $updateData['OPPORTUNITY'] = $arProperty['AMOUNT'];
         }
-        //обновить данные
+        if (isset($arProperty['RESPONSIBLE']) && $arProperty['RESPONSIBLE'] != $deal['ASSIGNED_BY_ID']) {
+            $updateData['ASSIGNED_BY_ID'] = $arProperty['RESPONSIBLE'];
+        }
+
+        if (empty($updateData)) {
+            return true;
+        }
+
+        // 7. Выполнение обновления
         try {
-            $result = DealTable::update($dealId, [
-                'OPPORTUNITY' => $arProperty['AMOUNT'],
-                'ASSIGNED_BY_ID' => $arProperty['RESPONSIBLE'],
-            ]);
+            $result = DealTable::update($arProperty['DEAL'], $updateData);
+            return $result->isSuccess();
         } catch (\Exception $e) {
             return false;
         }
-        if (!$result->isSuccess(true)) {
-            return false;
-        }
-        return true;
     }
 }

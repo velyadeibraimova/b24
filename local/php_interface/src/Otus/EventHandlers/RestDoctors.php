@@ -41,14 +41,14 @@ class RestDoctors //extends \IRestService
         try {
             $model = new Model();
             // Логируем входящие параметры
-            file_put_contents('/rest_doctors_add.log', "INPUT: " . print_r($arParams, true) . "\n", FILE_APPEND);
+            file_put_contents($_SERVER["DOCUMENT_ROOT"] . '/rest_doctors_add.log', "INPUT: " . print_r($arParams, true) . "\n", FILE_APPEND);
             $result = $model->add($arParams);
             // Логируем результат
-            file_put_contents('/rest_doctors_add.log', "RESULT: " . print_r($result, true) . "\n", FILE_APPEND);
+            file_put_contents($_SERVER["DOCUMENT_ROOT"] . '/rest_doctors_add.log', "RESULT: " . print_r($result, true) . "\n", FILE_APPEND);
             return $result;
         } catch (\Exception $e) {
             // Логируем ошибку
-            file_put_contents('/rest_doctors_add.log', "ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
+            file_put_contents($_SERVER["DOCUMENT_ROOT"] . '/rest_doctors_add.log', "ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
             throw new RestException($e->getMessage());
         }
     }
